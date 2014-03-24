@@ -1,0 +1,17 @@
+<html>
+<title>
+Data test
+</title>
+<script src='http://www.google.com/jsapi'></script>
+
+                <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js'></script>
+                <script src='chartkick.js'></script>
+<body>
+<div>Hello world</div>
+<div id='chart-0' style='height:400px;'></div>
+<div id='chart-1' style='height:400px;'></div>
+<div id='chart-2' style='height:400px;'></div>
+<script>$(function (){new Chartkick.BarChart('chart-0',[["My: 0",0],["My: 1",1],["My: 2",2],["My: 3",3],["My: 4",4],["My: 5",5],["My: 6",6],["My: 7",7],["My: 8",8],["My: 9",9]]);
+new Chartkick.PieChart('chart-1',[["My: 0",0],["My: 1",1],["My: 2",2],["My: 3",3],["My: 4",4],["My: 5",5],["My: 6",6],["My: 7",7],["My: 8",8],["My: 9",9]]);
+new Chartkick.LineChart('chart-2',[["My: 0",0],["My: 1",1],["My: 2",2],["My: 3",3],["My: 4",4],["My: 5",5],["My: 6",6],["My: 7",7],["My: 8",8],["My: 9",9]]);
+});</script></body></html>
