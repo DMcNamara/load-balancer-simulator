@@ -20,7 +20,7 @@ module Generator # or module
     mean_job_length = 30
 
     min_source = 0;
-    max_source = 2**32-1
+    max_source = 2**31-1
     mean_source = max_source/2
 
     last_arrival = 0
@@ -91,12 +91,22 @@ class LoadBalancer
     @jobs = jobs
     # array of server objects
     @servers = Array.new  
+    @name = "Generic"
+  end
+
+  def run
+    #Virtual
+  end
+
+  def simulate(run_title)
+    self.run
+    self.collect_results(run_title)
   end
 
   def get_least_connected_server
     least_connected_server = nil
-    least_load_size = 2**32
-    @servers.each_with_index do |i, server|
+    least_load_size = @servers.first.queue.size
+    @servers.each_with_index do |server,i|
       if server.queue.size < least_load_size
         least_load_size = server.queue.size
         least_connected_server = i
@@ -104,10 +114,29 @@ class LoadBalancer
     end
     return @servers[least_connected_server]
   end
+
+  def collect_results(output_name)
+    output = SimpleOutput::SimpleOutputEngine.new
+    output.addPlugin(SimplePlot.new(output_name + @name))
+    output.addPlugin(SimpleChartkick.new("#{output_name+@name}.html", output_name+@name, "./"))
+    @servers.each_with_index do |server,i|
+      output.setArray(server.queue_length_data, "Server#{i}: Queue", {'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>'queue size'})
+      output.setArray(server.rejections, "Server#{i}: Rejections", {'xlabel' => 'jobs', 'ylabel' => 'rejections', 'chart_type'=>'AreaChart', 'series'=>'rejections'})
+      output.setArray(server.wait_data, "Server#{i}: Wait Time", {'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => 'wait time'})
+      avg_use = server.load_time/server.active_time
+      output.annotate("Average Workload: #{avg_use}")
+      output.annotate("Jobs processed: #{server.total_jobs}")
+    end
+    output.save()
+  end
 end
 
 # various Load balancing methods
 class RoundRobinBalancer < LoadBalancer
+  def initialize(jobs)
+    super(jobs)
+    @name = "RoundRobin"
+  end
   def run
     while ~@jobs.empty?
       @servers.each do |server|
@@ -119,22 +148,34 @@ end
 
 
 class RandomBalancer < LoadBalancer
+  def initialize(jobs)
+    super(jobs)
+    @name = "Random"
+  end
   def run
     @jobs.each do |job|
-      @servers[Random[0..@servers.size-1]].push_job(job)
+      @servers[Random.rand [0..@servers.size-1] ].push_job(job)
     end
   end
 end
 
 class LeastConnectedBalancer < LoadBalancer
+  def initialize(jobs)
+    super(jobs)
+    @name = "LeastConnected"
+  end
   def run
     @jobs.each do |job|
-      self.get_least_loaded_server.push_job(job)
+      self.get_least_connected_server.push_job(job)
     end
   end
 end
 
 class HashBalancer < LoadBalancer
+  def initialize(jobs)
+    super(jobs)
+    @name = "Hash"
+  end
   def run
     @jobs.each do |job|
       @servers[@job.source % @servers.size].push_job(job)
@@ -143,10 +184,51 @@ class HashBalancer < LoadBalancer
 end
 
 class Server
-  attr_accessor :queue
-  @queue_length
-  def initalize(queue_length)
+  attr_accessor :queue_length_data, :rejections, :wait_data, :load_time, :total_jobs, :active_time
+
+  def initalize(queue_length, speed)
     @queue = Array.new  
-    @queue_length = -1
+    @max_queue_length = queue_length
+    @rejections = 0
+    @speed = 1
+    @wait_data = []
+    @queue_length_data = []
+    @load_time = 0
+    @total_jobs = 0
+    @active_time = 0
+  end
+
+  def push_job(job)
+    #Clear finished jobs
+    while @queue.front.last < job[0]
+      @queue.shift
+    end
+    #Log size
+    @queue_length_data << @queue.size == 0 ? 0 : @queue.size - 1
+    #Do we have a queue slot?
+    @total_jobs += 1
+    if @queue.size < @max_queue_length
+      #Calculate time until job starts
+      if @queue.size > 0
+        start_time = @queue.last[3]
+      else
+        start_time = job[0]
+      end
+      #Log wait time
+      @wait_data << start_time-job[0]
+      #Calculate time to process job
+      service_time = job[1]/@speed
+      #Log work time
+      @load_time += serivce_time
+      #Calculate departure 
+      depart_time = start_time + service_time
+      #Add departure to job 
+      job << depart_time
+      @active_time = depart_time
+      #Add job to queue
+      @queue.push(job)
+    else
+      @rejections += 1
+    end
   end
 end
