@@ -1,14 +1,10 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    chartkick (1.2.2)
-    gnuplot (2.6.2)
-    json (1.7.7)
+    SimpleOutput (1.0.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  chartkick
-  gnuplot
-  json
+  SimpleOutput
