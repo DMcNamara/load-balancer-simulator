@@ -35,19 +35,19 @@ module Generator # or module
       job_count.times do
         case method
         when "traffic_normal"
-          jobs << [@last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source) ]
+          jobs << [last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source) ]
         when "traffic_uniform"
-          jobs << [@last_arrival + RandomFunctions::Uniform(min_arrival,max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::Uniform(min_arrival,max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source)]
         when "traffic_exponential"
-          jobs << [@last_arrival + RandomFunctions::TruncatedExponential(mean_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::TruncatedExponential(mean_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Normal(min_source, max_source)]
         when "source_uniform"
-          jobs << [@last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Uniform(min_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::Uniform(min_source, max_source)]
         when "source_exponential"
-          jobs << [@last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::TruncatedExponential(mean_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Exponential(mean_job_length), RandomFunctions::TruncatedExponential(mean_source, max_source)]
         when "length_normal"
-          jobs << [@last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Normal(min_job_length, max_job_length), RandomFunctions::Normal(min_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Normal(min_job_length, max_job_length), RandomFunctions::Normal(min_source, max_source)]
         when "length_uniform"
-          jobs << [@last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Uniform(min_job_length, max_job_length), RandomFunctions::Normal(min_source, max_source)]
+          jobs << [last_arrival + RandomFunctions::Normal(min_arrival, max_arrival), RandomFunctions::Uniform(min_job_length, max_job_length), RandomFunctions::Normal(min_source, max_source)]
         end
         last_arrival = jobs.last.first
       end
@@ -86,8 +86,11 @@ module Generator # or module
 end
 
 class LoadBalancer
+  require 'simpleoutput'
+  require 'simplechartkick'
+  require 'simpleplot'
   # accepts input array from generator and passes them to the servers based on various methods
-  def initalize(jobs)
+  def initialize(jobs)
     @jobs = jobs
     # array of server objects
     @servers = Array.new  
@@ -133,12 +136,13 @@ end
 
 # various Load balancing methods
 class RoundRobinBalancer < LoadBalancer
+
   def initialize(jobs)
-    super(jobs)
+    super
     @name = "RoundRobin"
   end
   def run
-    while ~@jobs.empty?
+    while !@jobs.empty?
       @servers.each do |server|
         server.push_job(@jobs.pop)
       end
@@ -149,7 +153,7 @@ end
 
 class RandomBalancer < LoadBalancer
   def initialize(jobs)
-    super(jobs)
+    super
     @name = "Random"
   end
   def run
@@ -161,7 +165,7 @@ end
 
 class LeastConnectedBalancer < LoadBalancer
   def initialize(jobs)
-    super(jobs)
+    super
     @name = "LeastConnected"
   end
   def run
@@ -173,7 +177,7 @@ end
 
 class HashBalancer < LoadBalancer
   def initialize(jobs)
-    super(jobs)
+    super
     @name = "Hash"
   end
   def run
@@ -186,7 +190,7 @@ end
 class Server
   attr_accessor :queue_length_data, :rejections, :wait_data, :load_time, :total_jobs, :active_time
 
-  def initalize(queue_length, speed)
+  def initialize(queue_length, speed)
     @queue = Array.new  
     @max_queue_length = queue_length
     @rejections = 0

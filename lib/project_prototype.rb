@@ -1,14 +1,13 @@
-require './random_functions.rb'
+require '../lib/random_functions.rb'
 
 # queue length limits for servers?
 module Generator # or module
   include RandomFunctions
    # outputs list of [[arrival_time, job_length, source]] using various methods
    # source is an int representing IP, is [0 to int limit], randomly generated
-  def generate_jobs(method)
+  def generate_jobs(method, job_count = 2**15)
     jobs = []
-    #should be a power of 2 for the B model
-    job_count = 2**15 
+    #job_count should be a power of 2 for the B model
 
     #arrival times
     min_arrival = 0
@@ -61,7 +60,6 @@ module Generator # or module
     arrivals = []
     stack = []
     aggrigation_level = Math.log2(job_count)
-    puts "Aggrigation level: #{aggrigation_level}\n"
     #should model real burst traffic closely
     bias = 0.795
     stack.push([0, job_count*mean_job_length])
@@ -90,10 +88,11 @@ class LoadBalancer
   require 'simplechartkick'
   require 'simpleplot'
   # accepts input array from generator and passes them to the servers based on various methods
-  def initialize(jobs)
+  def initialize(jobs, server_count = 10)
     @jobs = jobs
     # array of server objects
-    @servers = Array.new  
+    @servers = Array.new
+    server_count.times{@servers.push(Server.new(10, 1))}
     @name = "Generic"
   end
 
@@ -107,26 +106,28 @@ class LoadBalancer
   end
 
   def get_least_connected_server
-    least_connected_server = nil
-    least_load_size = @servers.first.queue.size
+    least_connected_server = 0
+    least_load_size = @servers.first.connections
     @servers.each_with_index do |server,i|
-      if server.queue.size < least_load_size
-        least_load_size = server.queue.size
+      if server.connections < least_load_size
+        least_load_size = server.connections
         least_connected_server = i
       end
     end
     return @servers[least_connected_server]
   end
 
-  def collect_results(output_name)
-    output = SimpleOutput::SimpleOutputEngine.new
-    output.addPlugin(SimplePlot.new(output_name + @name))
-    output.addPlugin(SimpleChartkick.new("#{output_name+@name}.html", output_name+@name, "../include"))
+  def collect_results(output_name, output=nil)
+    if output == nil
+      output = SimpleOutput::SimpleOutputEngine.new
+      output.addPlugin(SimplePlot.new(output_name + @name))
+      output.addPlugin(SimpleChartkick.new("#{output_name+@name}.html", output_name+@name, "../include"))
+    end
     @servers.each_with_index do |server,i|
-      output.setArray(server.queue_length_data, "Server#{i}: Queue", {'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>'queue size'})
-      output.setArray(server.rejections, "Server#{i}: Rejections", {'xlabel' => 'jobs', 'ylabel' => 'rejections', 'chart_type'=>'AreaChart', 'series'=>'rejections'})
-      output.setArray(server.wait_data, "Server#{i}: Wait Time", {'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => 'wait time'})
+      output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>'queue size'})
+      output.setArray(server.wait_data, "Server#{i}-Wait", {'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => 'wait time'})
       avg_use = server.load_time/server.active_time
+      output.annotate("Rejected jobs: #{server.rejections}")
       output.annotate("Average Workload: #{avg_use}")
       output.annotate("Jobs processed: #{server.total_jobs}")
     end
@@ -144,7 +145,11 @@ class RoundRobinBalancer < LoadBalancer
   def run
     while !@jobs.empty?
       @servers.each do |server|
-        server.push_job(@jobs.pop)
+        if(@jobs.size > 0)
+          server.push_job(@jobs.shift)
+        else
+          break
+        end
       end
     end
   end
@@ -158,7 +163,8 @@ class RandomBalancer < LoadBalancer
   end
   def run
     @jobs.each do |job|
-      @servers[Random.rand [0..@servers.size-1] ].push_job(job)
+      index = Random.rand(0..@servers.size-1)
+      @servers[index].push_job(job)
     end
   end
 end
@@ -191,7 +197,7 @@ class Server
   attr_accessor :queue_length_data, :rejections, :wait_data, :load_time, :total_jobs, :active_time
 
   def initialize(queue_length, speed)
-    @queue = Array.new  
+    @queue = [] 
     @max_queue_length = queue_length
     @rejections = 0
     @speed = 1
@@ -204,7 +210,7 @@ class Server
 
   def push_job(job)
     #Clear finished jobs
-    while @queue.front.last < job[0]
+    while @queue.size > 0 ? @queue.first.last < job[0] : false
       @queue.shift
     end
     #Log size
@@ -213,26 +219,26 @@ class Server
     @total_jobs += 1
     if @queue.size < @max_queue_length
       #Calculate time until job starts
-      if @queue.size > 0
-        start_time = @queue.last[3]
-      else
-        start_time = job[0]
-      end
+      start_time = @queue.size > 0 ? @queue.last[3] : job[0]
       #Log wait time
       @wait_data << start_time-job[0]
       #Calculate time to process job
       service_time = job[1]/@speed
       #Log work time
-      @load_time += serivce_time
+      @load_time += service_time
       #Calculate departure 
       depart_time = start_time + service_time
       #Add departure to job 
       job << depart_time
       @active_time = depart_time
       #Add job to queue
-      @queue.push(job)
+      @queue << job
     else
       @rejections += 1
     end
+  end
+
+  def connections
+    @queue.size
   end
 end
