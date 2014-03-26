@@ -89,7 +89,7 @@ class LoadBalancer
   require 'simpleplot'
   # accepts input array from generator and passes them to the servers based on various methods
   def initialize(jobs, server_count = 10)
-    @jobs = jobs
+    @jobs = Array.new(jobs)
     # array of server objects
     @servers = Array.new
     server_count.times{@servers.push(Server.new(10, 1))}
@@ -105,18 +105,6 @@ class LoadBalancer
     self.collect_results(run_title)
   end
 
-  def get_least_connected_server
-    least_connected_server = 0
-    least_load_size = @servers.first.connections
-    @servers.each_with_index do |server,i|
-      if server.connections < least_load_size
-        least_load_size = server.connections
-        least_connected_server = i
-      end
-    end
-    return @servers[least_connected_server]
-  end
-
   def collect_results(output_name, output=nil)
     if output == nil
       output = SimpleOutput::SimpleOutputEngine.new
@@ -126,7 +114,7 @@ class LoadBalancer
     @servers.each_with_index do |server,i|
       output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>'queue size'})
       output.setArray(server.wait_data, "Server#{i}-Wait", {'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => 'wait time'})
-      avg_use = server.load_time/server.active_time
+      avg_use = server.active_time == 0 ? 0 : server.load_time/ server.active_time
       output.annotate("Rejected jobs: #{server.rejections}")
       output.annotate("Average Workload: #{avg_use}")
       output.annotate("Jobs processed: #{server.total_jobs}")
@@ -137,10 +125,9 @@ end
 
 # various Load balancing methods
 class RoundRobinBalancer < LoadBalancer
-
-  def initialize(jobs)
+  def initialize(jobs, server_count = 10)
     super
-    @name = "RoundRobin"
+    @name ="RoundRobin"
   end
   def run
     while !@jobs.empty?
@@ -157,7 +144,7 @@ end
 
 
 class RandomBalancer < LoadBalancer
-  def initialize(jobs)
+  def initialize(jobs, server_count = 10)
     super
     @name = "Random"
   end
@@ -170,25 +157,34 @@ class RandomBalancer < LoadBalancer
 end
 
 class LeastConnectedBalancer < LoadBalancer
-  def initialize(jobs)
+  def initialize(jobs, server_count = 10)
     super
     @name = "LeastConnected"
   end
   def run
     @jobs.each do |job|
-      self.get_least_connected_server.push_job(job)
+      load = @servers.first.connections(job[0])
+      least_index = 0
+      @servers.each_with_index do |server, index|
+        if server.connections(job[0]) < load 
+          load = server.connections(job[0])
+          least_index = index
+        end
+      end
+      @servers[least_index].push_job(job)
     end
   end
 end
 
 class HashBalancer < LoadBalancer
-  def initialize(jobs)
+  def initialize(jobs, server_count = 10)
     super
     @name = "Hash"
   end
   def run
     @jobs.each do |job|
-      @servers[@job.source % @servers.size].push_job(job)
+      index = job[2] % @servers.size
+      @servers[index].push_job(job)
     end
   end
 end
@@ -210,7 +206,7 @@ class Server
 
   def push_job(job)
     #Clear finished jobs
-    while @queue.size > 0 ? @queue.first.last < job[0] : false
+    while (@queue.size > 0) ? (@queue.first.last < job[0]) : false
       @queue.shift
     end
     #Log size
@@ -219,7 +215,7 @@ class Server
     @total_jobs += 1
     if @queue.size < @max_queue_length
       #Calculate time until job starts
-      start_time = @queue.size > 0 ? @queue.last[3] : job[0]
+      start_time = (@queue.size > 0) ? ((@queue.last[3] > job[0]) ? @queue.last[3] : job[0]) : job[0]     
       #Log wait time
       @wait_data << start_time-job[0]
       #Calculate time to process job
@@ -238,7 +234,10 @@ class Server
     end
   end
 
-  def connections
+  def connections(arrival)
+    while @queue.size > 0 ? @queue.first.last < arrival : false
+      @queue.shift
+    end
     @queue.size
   end
 end

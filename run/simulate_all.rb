@@ -1,4 +1,4 @@
-require '../project_prototype.rb'
+require '../lib/project_prototype.rb'
 include Generator
 
 simulations = ["traffic_burst",
@@ -9,16 +9,17 @@ simulations = ["traffic_burst",
               "source_exponential",
               "length_normal",
               "length_uniform"]
-jobs = {}
 
-simulations.each {|name| jobs[name] = Generator.generate_jobs(name)}
-# various Load balancing methods
-jobs.each_pair do |(name,jobs_list)|
+job_count = 5000
+server_count = 5
+
+simulations.each do |name| 
+  jobs = Generator.generate_jobs(name, job_count)
   lbs = []
-  lbs << RoundRobinBalancer.new(jobs_list)
-  lbs << RandomBalancer.new(jobs_list)
-  lbs << LeastConnectedBalancer.new(jobs_list)
-  lbs << HashBalancer.new(jobs_list)
+  lbs << RoundRobinBalancer.new(jobs, server_count)
+  lbs << RandomBalancer.new(jobs, server_count)
+  lbs << LeastConnectedBalancer.new(jobs, server_count)
+  lbs << HashBalancer.new(jobs, server_count)
   lbs.each do |trial|
     trial.simulate(name)
   end
