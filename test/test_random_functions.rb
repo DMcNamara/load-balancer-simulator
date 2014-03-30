@@ -1,3 +1,4 @@
+
 require '../lib/random_functions.rb'
 
 require 'simpleoutput'
@@ -13,7 +14,8 @@ html = SimpleChartkick.new("GeneratorTest.html", "Generator test", '../include')
 plot = SimplePlot.new("_test")
 logger = SimpleLog.new("random_test")
 
-output.addPlugn(html)
+
+output.addPlugin(html)
 output.addPlugin(plot)
 output.addPlugin(logger)
 
@@ -37,11 +39,12 @@ run.times do
 	gaussX << x
 	gaussY << y
 end
-output.setXY([gaussX, gaussY], "Gauss")
+output.setXY(gaussX, gaussY, "Gauss")
 output.setArray(gaussX, "GaussX", {"histogram" => true})
 output.setArray(gaussY, "GaussY", {"histogram" => true})
 
 puts "Normal"
 normal = []
 run.times {normal << RandomFunctions.Normal(0, 10)}
-output.setArray(normal, "Normal", {"histogram" => true, 'ymin' => 0, 'ymax' => 10})
+output.setArray(normal, "Normal", {"histogram" => true, 'ymin' => 0, 'ymax' => 11})
+output.save()

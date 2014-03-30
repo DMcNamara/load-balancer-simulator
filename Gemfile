@@ -1,3 +1,3 @@
-ruby '2.1'
+ruby '2.1.1'
 source 'https://rubygems.org'
-gem 'SimpleOutput'
+gem 'SimpleOutput', '1.0.5'
