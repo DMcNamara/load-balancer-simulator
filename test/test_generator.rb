@@ -1,4 +1,4 @@
-require './project_prototype.rb'
+require '../lib/project_prototype.rb'
 require 'rubygems'
 require 'simpleoutput'
 require 'simplechartkick'
@@ -8,7 +8,7 @@ include Generator
 
 jobs = generate_jobs "traffic_burst"
 output = SimpleOutput::SimpleOutputEngine.new
-html = SimpleChartkick.new("GeneratorTest.html", "Generator test", './')
+html = SimpleChartkick.new("GeneratorTest.html", "Generator test", '../include')
 plot = SimplePlot.new("_test")
 output.addPlugin(html)
 output.addPlugin(plot)

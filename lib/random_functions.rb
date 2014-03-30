@@ -26,11 +26,14 @@ module RandomFunctions
   def Normal(min, max)
     #This is an approximate normal distribution
     #Map the X values
-    x, y = self.Gaussian()
-    #x is uniform
-    #y is 
-    normal = x*y
-    min + (min-max)*normal
+    x, y = self.Gaussian(0,0.33)
+    y = [y, 1].min
+    y = [y, -1].max
+    x = [x, 1].min
+    x = [x, -1].max
+    swing = (max-min)/2
+    center = min+swing
+    normal = center + y*(swing)
   end
 
 end
