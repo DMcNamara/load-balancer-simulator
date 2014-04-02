@@ -1,12 +1,12 @@
-require '../lib/project_prototype.rb'
+require '../lib/generator.rb'
 require 'rubygems'
 require 'simpleoutput'
 require 'simplechartkick'
 require 'simpleplot'
 
-include Generator
+generator = Generator.new
 
-jobs = generate_jobs "traffic_burst"
+jobs = generator.generate_jobs "traffic_burst"
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("GeneratorTest.html", "Generator test", '../include')
 plot = SimplePlot.new("_test")
@@ -16,11 +16,11 @@ arrival_data = []
 length_data = []
 source_data = []
 jobs.each_with_index do |value, index|
-  arrival_data << [index, value[0]]
-  length_data << [index, value[1]]
-  source_data << [index, value[2]]
+  arrival_data << [index, value.arrival]
+  length_data << [index, value.length]
+  source_data << [index, value.source]
 end 
-output.setPoints(arrival_data, "Arrivals")
-output.setPoints(length_data, "Job Length")
-output.setPoints(source_data, "Source")
+output.setPoints(arrival_data, "Arrivals", {'xlabel' => 'count', 'ylabel' => 'time'})
+output.setPoints(length_data, "Job Length", {'xlabel' => 'job #', 'ylabel' => 'time'})
+output.setPoints(source_data, "Source", {'xlabel' => 'count', 'ylabel' => 'ip'})
 output.save()

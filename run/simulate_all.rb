@@ -1,5 +1,6 @@
-require '../lib/project_prototype.rb'
-include Generator
+require '../lib/generator.rb'
+require '../lib/load_balancer.rb'
+
 
 simulations = ["traffic_burst",
               "traffic_normal",
@@ -14,7 +15,7 @@ job_count = 5000
 server_count = 5
 
 simulations.each do |name| 
-  jobs = Generator.generate_jobs(name, job_count)
+  jobs = Generator.new.generate_jobs(name, job_count)
   lbs = []
   lbs << RoundRobinBalancer.new(jobs, server_count)
   lbs << RandomBalancer.new(jobs, server_count)
