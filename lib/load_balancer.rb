@@ -27,12 +27,19 @@ class LoadBalancer
       output.addPlugin(SimpleChartkick.new("#{output_name+@name}.html", output_name+@name, "../include"))
     end
     @servers.each_with_index do |server,i|
-      output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>'queue size'})
-      output.setArray(server.wait_data, "Server#{i}-Wait", {'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => 'wait time'})
-      avg_use = server.active_time == 0 ? 0 : server.load_time/ server.active_time
-      output.annotate("Rejected jobs: #{server.rejections}")
-      output.annotate("Average Workload: #{avg_use}")
-      output.annotate("Jobs processed: #{server.total_jobs}")
+      unless server.queue_length_data.size < 1 || server.wait_data.size < 1
+        if i == 0
+          output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xsize' => 2000, 'ysize' => 1500, 'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
+          output.setArray(server.wait_data, "Server#{i}-Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
+        else
+          output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
+          output.setArray(server.wait_data, "Server#{i}-Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
+        end
+        avg_use = server.active_time == 0 ? 0 : server.load_time/ server.active_time
+        output.annotate("Rejected jobs: #{server.rejections}")
+        output.annotate("Average Workload: #{avg_use}")
+        output.annotate("Jobs processed: #{server.total_jobs}")
+      end
     end
     output.save()
   end
@@ -111,7 +118,7 @@ class Server
     @queue = [] 
     @max_queue_length = queue_length
     @rejections = 0
-    @speed = 1
+    @speed = 5
     @wait_data = []
     @queue_length_data = []
     @load_time = 0

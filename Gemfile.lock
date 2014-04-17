@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    SimpleOutput (1.0.5)
+    SimpleOutput (1.0.8)
       gnuplot (~> 2.6, >= 2.6.2)
       json (~> 1.7, >= 1.7.7)
     gnuplot (2.6.2)
@@ -11,4 +11,4 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  SimpleOutput (= 1.0.5)
+  SimpleOutput (= 1.0.8)

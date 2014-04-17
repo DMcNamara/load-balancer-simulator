@@ -9,10 +9,10 @@ class Generator # or module
                   max_arrival = 100, #units
                   mean_arrival = nil, #middle
 
-                  #Bytes
-                  min_job_length = 5, #5b
-                  max_job_length = 300000, #300Mb
-                  mean_job_length = 30, #30b
+                  #Length
+                  min_job_length = 1, 
+                  max_job_length = 30, #300Mb
+                  mean_job_length = 15, 
 
                   min_source = 0, #Zero
                   max_source = 2**31-1, #int max
