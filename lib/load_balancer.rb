@@ -118,8 +118,8 @@ class Server
     @queue = [] 
     @max_queue_length = queue_length
     @rejections = 0
-    @speed = 5
     @wait_data = []
+    @mean_service_time = 0.001
     @queue_length_data = []
     @load_time = 0
     @total_jobs = 0
@@ -141,7 +141,7 @@ class Server
       #Log wait time
       @wait_data << start_time-job.arrival
       #Calculate time to process job
-      service_time = job.length/@speed
+      service_time = Exponential(@mean_service_time)
       #Log work time
       @load_time += service_time
       #Calculate departure 

@@ -5,27 +5,25 @@ require 'simpleplot'
 require 'simplechartkick'
 
 
-simulations = ["traffic_burst",
-              "traffic_normal",
-              "traffic_uniform",
-              "traffic_exponential",
-              "source_uniform",
-              "source_exponential",
-              "length_normal",
-              "length_uniform"]
-
 job_count = 5000
+
+arrival_interval = 1.0/5000.0
+arrival_interval_end = 1.0/20000.0
+
 server_count = 5
-traffic = Generator.new(0,20,5,1,30,15,0,(2**31)-1,nil)
+server_count_end = 20
+
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("TrafficProfiles.html", "Traffic", '../include')
-plot = SimplePlot.new("_profile")
+plot = SimplePlot.new("_tp")
+
 output.addPlugin(html)
-output.addPlugin(plot)
+output.addPlugin(plot) 
 
-simulations.each do |name| 
+until server_count > server_count_end 
+  until arrival_interval > arrival_interval_end
 
-  jobs = traffic.generate_jobs(name, job_count)
+    jobs = Generator.new(arrival_interval).generate_jobs(job_count)
   arrival_data = []
   length_data = []
   source_data = []

@@ -6,7 +6,7 @@ require 'simpleplot'
 
 generator = Generator.new
 
-jobs = generator.generate_jobs "traffic_burst"
+jobs = generator.generate_jobs
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("GeneratorTest.html", "Generator test", '../include')
 plot = SimplePlot.new("_test")
