@@ -5,18 +5,11 @@ require 'simpleplot'
 require 'simplechartkick'
 
 
-simulations = ["traffic_burst",
-              "traffic_normal",
-              "traffic_uniform",
-              "traffic_exponential",
-              "source_uniform",
-              "source_exponential",
-              "length_normal",
-              "length_uniform"]
+simulations = ["traffic_burst"]
 
 job_count = 5000
 server_count = 5
-traffic = Generator.new(0,100,nil,1,30,15,0,(2**31)-1,nil)
+traffic = Generator.new(0,20,5,1,30,15,0,(2**31)-1,nil)
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("TrafficProfiles.html", "Traffic", '../include')
 plot = SimplePlot.new("_profile")
@@ -36,9 +29,9 @@ simulations.each do |name|
     source_data << job.source 
     last = arrival_data.last
   end
-  output.setArray(arrival_data.clone, "#{name}_Arrivals", {'histogram' => true, 'bincount' => 20})
-  output.setArray(length_data.clone, "#{name}_Lengths", {'xlabel' => 'length', 'ylabel' => 'count', 'ymin' => 0, 'ymax' => 3000, 'xmin' => 0, 'xmax' => 100, 'histogram' => true, 'bincount' => 100})
-  output.setArray(source_data.clone, "#{name}_Src", {'xlabel' => 'source', 'ylabel' => 'count'})
+  output.setArray(arrival_data.clone, "#{name}_Arrivals", {'xsize' => 1000, 'ysize' => 700, 'histogram' => true, 'bincount' => 20})
+  output.setArray(length_data.clone, "#{name}_Lengths", {'xsize' => 1000, 'ysize' => 700,'xlabel' => 'length', 'ylabel' => 'count', 'histogram' => true, 'bincount' => 100})
+  output.setArray(source_data.clone, "#{name}_Src", {'xsize' => 1000, 'ysize' => 700,'xlabel' => 'source', 'ylabel' => 'count'})
   lbs = []
   lbs << RoundRobinBalancer.new(jobs, server_count)
   lbs << RandomBalancer.new(jobs, server_count)

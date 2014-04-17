@@ -54,7 +54,7 @@ class Generator # or module
       #Source locality modeled by normal distribution
       arrivals = burst_arrivals(job_count)
       arrivals.each do |arrival|
-        jobs << Job.new(arrival, Normal(@min_job_length, @max_job_length), Normal(@min_source,@max_source),0)
+        jobs << Job.new(arrival, Exponential(@mean_job_length), Normal(@min_source,@max_source),0)
       end
       return jobs
     else
