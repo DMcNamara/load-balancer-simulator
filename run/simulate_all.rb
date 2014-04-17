@@ -5,7 +5,14 @@ require 'simpleplot'
 require 'simplechartkick'
 
 
-simulations = ["traffic_burst"]
+simulations = ["traffic_burst",
+              "traffic_normal",
+              "traffic_uniform",
+              "traffic_exponential",
+              "source_uniform",
+              "source_exponential",
+              "length_normal",
+              "length_uniform"]
 
 job_count = 5000
 server_count = 5
