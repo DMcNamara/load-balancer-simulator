@@ -2,8 +2,8 @@
 *.rbc
 .bundle
 .config
-.png
-.html
+*.png
+*.html
 coverage
 InstalledFiles
 lib/bundler/man
