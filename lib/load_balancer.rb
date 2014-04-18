@@ -2,6 +2,9 @@ class LoadBalancer
   require 'simpleoutput'
   require 'simplechartkick'
   require 'simpleplot'
+  require 'simplelog'
+  require '../lib/random_functions'
+  
   # accepts input array from generator and passes them to the servers based on various methods
   def initialize(jobs, server_count = 10)
     @jobs = Array.new(jobs)
@@ -9,40 +12,59 @@ class LoadBalancer
     @servers = Array.new
     server_count.times{@servers.push(Server.new(10, 1))}
     @name = "Generic"
+    @average_wait = 0
+    @average_queue = 0
+    @average_use = 0
+    @average_throughput = 0
   end
 
   def run
     #Virtual
   end
 
-  def simulate(run_title)
+  def simulate(uid)
+    @average_wait = 0
+    @average_queue = 0
+    @average_use = 0
+    @average_throughput = 0
     self.run
-    self.collect_results(run_title)
+    self.collect_results(uid)
   end
 
-  def collect_results(output_name, output=nil)
-    if output == nil
-      output = SimpleOutput::SimpleOutputEngine.new
-      output.addPlugin(SimplePlot.new(output_name + @name))
-      output.addPlugin(SimpleChartkick.new("#{output_name+@name}.html", output_name+@name, "../include"))
-    end
+  def collect_results(uid)
+    output = SimpleOutput::SimpleOutputEngine.new
+    html = SimpleChartkick.new("#{@name} Server Trace #{uid}.html", "#{@name} Server Trace", '../include')
+    plot = SimplePlot.new("#{@name}_trace_#{uid}")
+    log = SimpleCSV.new("#{@name}_trace_#{uid}")
+    output.addPlugin(html)
+    output.addPlugin(plot)
+    output.addPlugin(log)
     @servers.each_with_index do |server,i|
       unless server.queue_length_data.size < 1 || server.wait_data.size < 1
         if i == 0
-          output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xsize' => 2000, 'ysize' => 1500, 'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
-          output.setArray(server.wait_data, "Server#{i}-Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
+          output.setArray(server.queue_length_data, "Average Queue Length", {'xsize' => 2000, 'ysize' => 1500, 'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
+          output.setArray(server.wait_data, "Average Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
         else
-          output.setArray(server.queue_length_data, "Server#{i}-Queue", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
-          output.setArray(server.wait_data, "Server#{i}-Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
+          output.appendArray(server.queue_length_data, "Average Queue Length", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'queue size', 'series'=>"server #{i}"})
+          output.appendArray(server.wait_data, "Average Wait", {'xsize' => 2000, 'ysize' => 1500,'xlabel' => 'jobs', 'ylabel' => 'wait time', 'chart_type' => 'ColumnChart', 'series' => "server #{i}"})
         end
-        avg_use = server.active_time == 0 ? 0 : server.load_time/ server.active_time
+        @average_use += server.active_time == 0 ? 0 : server.load_time/ server.active_time
+        @average_throughput += server.total_jobs/server.active_time
+        queue_sum = 0
+        server.queue_length_data.each {|x| queue_sum += x }
+        @average_queue += queue_sum/server.queue_length_data.size
+        wait_sum = 0
+        server.wait_data.each {|x| wait_sum += x}
+        @average_wait += wait_sum/server.wait_data.size
         output.annotate("Rejected jobs: #{server.rejections}")
-        output.annotate("Average Workload: #{avg_use}")
         output.annotate("Jobs processed: #{server.total_jobs}")
       end
+      @results = {'average_throughput' => @average_throughput/@servers.size, 'average_use' => @average_use/@servers.size, 'average_queue' => @average_queue/@servers.size, 'average_wait' => @average_wait/@servers.size}
     end
     output.save()
+    return @results
   end
+  
 end
 
 # various Load balancing methods
@@ -113,7 +135,7 @@ end
 
 class Server
   attr_accessor :queue_length_data, :rejections, :wait_data, :load_time, :total_jobs, :active_time
-
+  include RandomFunctions
   def initialize(queue_length, speed)
     @queue = [] 
     @max_queue_length = queue_length
@@ -127,6 +149,7 @@ class Server
   end
 
   def push_job(job)
+
     #Clear finished jobs
     while (@queue.size > 0) ? (@queue.first.departure < job.arrival) : false
       @queue.shift

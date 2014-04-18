@@ -7,7 +7,7 @@ class Generator # or module
    # source is an int representing IP, is [0 to int limit], randomly generated
   def initialize( 
                   mean_arrival = 1.0/9000.0, #m
-                  mean_job_length = 1000
+                  mean_job_length = 1000,
                   min_source = 0, #Zero
                   max_source = 2**31-1, #int max
                   mean_source = nil)
