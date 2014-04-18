@@ -11,7 +11,7 @@ job_count = 50000
 server_count = 1
 arrival_rate = 0.1
 service_rate = 0.125
-traffic = Generator.new(0,200000000,arrival_rate,1,3000000, service_rate,0,(2**31)-1,nil)
+traffic = Generator.new(1.0/arrival_rate,1.0/service_rate,0,(2**31)-1,nil)
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("TrafficProfiles.html", "Traffic", '../include')
 plot = SimplePlot.new("_profile")
@@ -19,7 +19,7 @@ output.addPlugin(html)
 output.addPlugin(plot)
 
 simulations.each do |name| 
-
+  puts name
   jobs = traffic.generate_jobs(name, job_count)
   arrival_data = []
   length_data = []
@@ -40,7 +40,7 @@ simulations.each do |name|
   # lbs << LeastConnectedBalancer.new(jobs, server_count)
   # lbs << HashBalancer.new(jobs, server_count)
   lbs.each do |trial|
-    trial.simulate(name)
+    puts trial.simulate(name)
   end
 end
 output.save();

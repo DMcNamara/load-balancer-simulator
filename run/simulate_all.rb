@@ -9,23 +9,21 @@ require 'simplecsv'
 simulations = ["traffic_burst"]
 
 job_count = 5000
-server_count = 5
-server_end = 10
+server_count = 1
+server_end = 15
 
 output = SimpleOutput::SimpleOutputEngine.new
 html = SimpleChartkick.new("TrafficProfiles.html", "Traffic", '../include')
 plot = SimplePlot.new("_profile")
 output.addPlugin(html)
 output.addPlugin(plot)
-max_load_level = 20
+max_load_level = 40
 
 names = ["RoundRobin", "Random", "LeastConnected", "Hash"]
 
 results = {}
-
-start_load_level = 5
-load_level_step = 5
-load_level = start_load_level
+service_rate = 0.125
+arrival_rate 
 x_vector = []
 while load_level < max_load_level
   x_vector << load_level
@@ -45,7 +43,7 @@ while server_count < server_end
   end
   while load_level < max_load_level
 
-    traffic = Generator.new(0.0,50,1.0/load_level.to_f,1,30,12,0,(2**31)-1,nil)
+    traffic = Generator.new(1.0/arrival_rate,1.0/service_rate,1,30,12,0,(2**31)-1,nil)
     jobs = traffic.generate_jobs("traffic_burst", job_count)
     arrival_data = []
     length_data = []
