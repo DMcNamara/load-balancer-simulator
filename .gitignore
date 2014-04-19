@@ -4,6 +4,8 @@
 .config
 *.png
 *.html
+*.txt
+*.csv
 coverage
 InstalledFiles
 lib/bundler/man
