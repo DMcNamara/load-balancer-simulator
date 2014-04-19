@@ -5,12 +5,8 @@ class Generator # or module
   Job = Struct.new(:arrival, :length, :source, :departure)
    # outputs list of [[arrival_time, job_length, source]] using various methods
    # source is an int representing IP, is [0 to int limit], randomly generated
-  def initialize(
-                  mean_arrival = nil, #middle
-
-                
-                  mean_job_length = 15, 
-
+  def initialize( mean_arrival = nil, #middle
+                  mean_job_length = 15,  # actually service time, service_rate = 1/mean_job_length
                   min_source = 0, #Zero
                   max_source = 2**31-1, #int max
                   mean_source = nil)
