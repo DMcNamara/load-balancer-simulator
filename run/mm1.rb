@@ -4,6 +4,10 @@ require 'simpleoutput'
 require 'simpleplot'
 require 'simplechartkick'
 
+# Set up logging and plotting
+output = SimpleOutput::SimpleOutputEngine.new
+plot = SimplePlot.new("_profile")
+output.addPlugin(plot)
 
 simulations = ["traffic_exponential"]
 
@@ -12,11 +16,7 @@ server_count = 6
 arrival_rate = 2
 service_rate = 2.5
 traffic = Generator.new(1.0/arrival_rate,1.0/service_rate,0,(2**31)-1,nil)
-output = SimpleOutput::SimpleOutputEngine.new
-html = SimpleChartkick.new("TrafficProfiles.html", "Traffic", '../include')
-plot = SimplePlot.new("_profile")
-output.addPlugin(html)
-output.addPlugin(plot)
+
 
 simulations.each do |name| 
   puts name
@@ -36,9 +36,7 @@ simulations.each do |name|
   output.setArray(source_data.clone, "#{name}_Src", {'xsize' => 1000, 'ysize' => 700,'xlabel' => 'source', 'ylabel' => 'count'})
   lbs = []
   lbs << RoundRobinBalancer.new(jobs, server_count)
-  # lbs << RandomBalancer.new(jobs, server_count)
-  # lbs << LeastConnectedBalancer.new(jobs, server_count)
-  # lbs << HashBalancer.new(jobs, server_count)
+
   lbs.each do |trial|
     puts trial.simulate(name)
   end
