@@ -22,10 +22,10 @@ names = ["RoundRobin", "Random", "LeastConnected", "Hash"]
 
 results = {}
 service_rate = 0.125 #Units per second
-start_arrival_rate = 0.1 #Arrivals per second
-max_arrival_rate = 1
-arrival_rate_step  = 0.1
-arrival_rate = 0.1
+start_arrival_rate = 1 #Arrivals per second
+max_arrival_rate = 11
+arrival_rate_step  = 1
+arrival_rate = 1
 x_vector = []
 while arrival_rate < max_arrival_rate
   x_vector << arrival_rate

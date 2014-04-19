@@ -8,7 +8,7 @@ require 'simplechartkick'
 simulations = ["traffic_exponential"]
 
 job_count = 50000
-server_count = 1
+server_count = 6
 arrival_rate = 2
 service_rate = 2.5
 traffic = Generator.new(1.0/arrival_rate,1.0/service_rate,0,(2**31)-1,nil)
