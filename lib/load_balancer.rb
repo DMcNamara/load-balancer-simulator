@@ -47,7 +47,6 @@ class LoadBalancer
         server.queue_length_data.each {|len| avg_queue += len}
         avg_wait = 0
         server.wait_data.each {|wait| avg_wait += wait}
-
         results['average_queue'] += avg_queue / server.queue_length_data.size
         results['average_wait'] += avg_wait / server.wait_data.size
         output.annotate("Rejected jobs: #{server.rejections}")
@@ -110,7 +109,6 @@ class LeastConnectedBalancer < LoadBalancer
       least_index = -1
       @servers.each_with_index do |server, index|
         if server.connections(job.arrival) < load 
-          
           load = server.connections(job.arrival)
           least_index = index
         end
@@ -157,7 +155,7 @@ class Server
     @queue_length_data << @queue.size == 0 ? 0 : @queue.size - 1
     start_time = (@queue.size > 0) ? ((@queue.last.departure > arrival) ? @queue.last.departure : arrival) : arrival     
       #Log wait time
-    @wait_data << start_time-arrival
+    
   end
 
   def push_job(job)
@@ -170,6 +168,7 @@ class Server
     if @queue.size < @max_queue_length
       #Calculate time until job starts
       start_time = (@queue.size > 0) ? ((@queue.last.departure > job.arrival) ? @queue.last.departure : job.arrival) : job.arrival     
+      @wait_data << start_time-job.arrival
       #Calculate time to process job
       service_time = job.length/@speed
       #Log work time
